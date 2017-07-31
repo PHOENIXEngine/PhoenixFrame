@@ -1,4 +1,4 @@
-// PhoenixArduino
+// PhoenixFrame
 
 #include <LedControl.h>
 

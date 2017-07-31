@@ -1,3 +1,3 @@
 # PhoenixFrame
-PhonenixFrame 机器人Arduino代码
-PhoenixFrame Arduino fireware
+PhonenixFrame机器人 Arduino代码
+PhoenixFrame Robot Arduino fireware
