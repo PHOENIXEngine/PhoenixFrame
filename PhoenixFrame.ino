@@ -94,6 +94,29 @@ void lightOn(bool isOn)
     digitalWrite(PinLight, LOW);
 }
 
+// trigger
+int PinTrig = A0;
+int PinEcho = A1;
+void distInit(int pinTrig, int pinEcho)
+{
+    PinTrig = pinTrig;
+    PinEcho = pinEcho;
+    pinMode(PinTrig, OUTPUT); 
+    pinMode(PinEcho, INPUT); 
+}
+int distanceTest()   // 量出前方距离 
+{
+  digitalWrite(PinTrig, LOW);   // 给触发脚低电平2μs
+  delayMicroseconds(2);
+  digitalWrite(PinTrig, HIGH);  // 给触发脚高电平10μs，这里至少是10μs
+  delayMicroseconds(20);
+  digitalWrite(PinTrig, LOW);    // 持续给触发脚低电
+  float fdistance = pulseIn(PinEcho, HIGH);  // 读取高电平时间(单位：微秒)
+  fdistance= fdistance/58;       //为什么除以58等于厘米，  Y米=（X秒*344）/2
+                                 // X秒=（ 2*Y米）/344 ==》X秒=0.0058*Y米 ==》厘米=微秒/58
+  return (int)fdistance;
+} 
+
 void setup() 
 {
   // Moto
@@ -120,6 +143,9 @@ void setup()
 
   // Light
   pinMode(PinLight, OUTPUT); 
+
+  // Trig
+  distInit(A0, A1);
 
   // Serial
   Serial.begin(9600);
@@ -346,6 +372,30 @@ void OnCmd(String cmdStr)
 
         analogWrite(pinVal, writeVal); 
       }
+      else if (String("aR") == cmds[0])
+      {
+        // pinVal val
+        int pinVal = 0;
+        if (!cmds[1].equals(""))
+        {
+            char charVal = cmds[1][0];
+            if ('A' == charVal)
+            {
+              String cntStr = cmds[1].substring(1);
+              pinVal = A0 + atoi(cntStr.c_str());
+
+              int analogVal = analogRead(pinVal);
+              String sendStr = String("aR ") + String(analogVal);
+              Serial.println(sendStr);
+            } 
+        }
+      }
+      else if (String("dist") == cmds[0])
+      {
+          float dist = distanceTest();
+          String sendStr = String("dist ") + String(dist);
+          Serial.println(sendStr);
+      }
    }
 }
 
@@ -358,9 +408,7 @@ void loop()
     char c = Serial.read();
     
     if ('\n' == c)
-    { 
-      Serial.println(serStr);
-      
+    {  
       if (serStr.length() > 0)
       {
            OnCmdGroup(serStr);
