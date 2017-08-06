@@ -5,11 +5,35 @@
 // Move
 int pinL0=4;
 int pinL1=5;
+int pinLSpeed = 3;
 int pinR0=7;
 int pinR1=8;
-int pinLSpeed = 3;
 int pinRSpeed = 9;
 
+void vehicleSet(int pL0, int pL1, int sL,
+  int pR0, int pR1, int sR)
+{
+  pinL0 = pL0;
+  pinL1 = pL1;
+  pinLSpeed = sL;
+  pinR0 = pR0;
+  pinR1 = pR1;
+  pinRSpeed = sR;
+  
+  pinMode(pinL0, OUTPUT);
+  pinMode(pinL1, OUTPUT);
+  
+  pinMode(pinR0, OUTPUT);
+  pinMode(pinR1, OUTPUT);
+
+  pinMode(pinLSpeed, OUTPUT);
+  pinMode(pinRSpeed, OUTPUT);
+    
+  leftGo(0);
+  rightGo(0);
+  leftSpeed(0);
+  rightSpeed(0);  
+}
 void leftGo(int val)
 {
   if (1 == val)
@@ -28,12 +52,10 @@ void leftGo(int val)
       digitalWrite(pinL1, LOW); 
    }
 }
-
 void leftSpeed(int val)
 {
     analogWrite(pinLSpeed, val); 
 }
-
 void rightGo(int val)
 {
   if (1 == val)
@@ -52,16 +74,15 @@ void rightGo(int val)
       digitalWrite(pinR0, LOW); 
    }
 }
-
 void rightSpeed(int val)
 {
     analogWrite(pinRSpeed, val); 
 }
 
 // LCD
-int DIN = 12;  
-int CS =  11;  
-int CLK = 10;  
+int pinDIN = 12;  
+int pinCS =  11;  
+int pinCLK = 10;  
 byte e[8]=     {0x7C,0x7C,0x60,0x7C,0x7C,0x60,0x7C,0x7C};  //E  
 byte d[8]=     {0x78,0x7C,0x66,0x66,0x66,0x66,0x7C,0x78};  //D  
 byte u[8]=     {0x66,0x66,0x66,0x66,0x66,0x66,0x7E,0x7E};  //U  
@@ -74,7 +95,15 @@ byte m[8]=     {0xE7,0xFF,0xFF,0xDB,0xDB,0xDB,0xC3,0xC3};  //M
 byte smile[8]=   {0x3C,0x42,0xA5,0x81,0xA5,0x99,0x42,0x3C};//笑脸  
 byte neutral[8]= {0x3C,0x42,0xA5,0x81,0xBD,0x81,0x42,0x3C};//标准脸  
 
-LedControl lc=LedControl(DIN,CLK,CS,4);
+LedControl lc = LedControl(pinDIN, pinCS, pinCLK, 4);
+void lcdSet(int pDIN, int pCS, int pCLK)
+{
+  pinDIN = pDIN;
+  pinCS = pCS;
+  pinCLK = pCLK;
+
+  lc = LedControl(pinDIN, pinCS, pinCLK, 4);
+}
 void printByte(byte character [])  
 {  
   int i = 0;
@@ -86,12 +115,54 @@ void printByte(byte character [])
 
 // Light
 int PinLight = 6;
+void lightSet(int pin, bool isA)
+{
+  if (isA)
+  {
+    PinLight = A0 + pin;
+  }
+  else
+  {
+    PinLight = pin;
+  }
+  
+  pinMode(PinLight, OUTPUT); 
+}
 void lightOn(bool isOn)
 {
   if (isOn)
     digitalWrite(PinLight, HIGH);
   else
     digitalWrite(PinLight, LOW);
+}
+
+// colorLight
+int cPinR = A2;
+int cPinG = A3;
+int cPinB = A4;
+void cLightSet(int pinR, int pinG, int pinB, bool isA)
+{
+  cPinR = pinR;
+  cPinG = pinG;
+  cPinB = pinB;
+  if (!isA)
+  {
+    pinMode(cPinR, true);
+    pinMode(cPinG, true);
+    pinMode(cPinB, true);
+  }
+  else
+  {
+    pinMode(A0 + cPinR, true);
+    pinMode(A0 + cPinG, true);
+    pinMode(A0 + cPinB, true);
+  }
+}
+void cLight(int r, int g, int b)
+{
+    digitalWrite(cPinR, r>0 ? HIGH:LOW); 
+    digitalWrite(cPinG, g>0 ? HIGH:LOW);  
+    digitalWrite(cPinB, b>0 ? HIGH:LOW);  
 }
 
 // trigger
@@ -140,9 +211,6 @@ void setup()
   lc.clearDisplay(0);   //清除显示 
   
   printByte(neutral);
-
-  // Light
-  pinMode(PinLight, OUTPUT); 
 
   // Trig
   distInit(A0, A1);
@@ -204,8 +272,21 @@ void OnCmd(String cmdStr)
       p=strtok(NULL," ");
    }   
    if (pI > 0)
-   {   
-      if (String("m") == cmds[0])
+   {  
+      if (String("v") == cmds[0])
+      {
+        if (String("s") == cmds[1])
+        {
+          int pL0 = atoi(cmds[2].c_str());
+          int pL1 = atoi(cmds[3].c_str());
+          int sL = atoi(cmds[4].c_str());
+          int pR0 = atoi(cmds[5].c_str());
+          int pR1 = atoi(cmds[6].c_str());
+          int sR = atoi(cmds[7].c_str());
+          vehicleSet(pL0, pL1, sL, pR0, pR1, sR);
+        }
+      }
+      else if (String("m") == cmds[0])
       {
         if (String("l") == cmds[1])
         {
@@ -251,7 +332,14 @@ void OnCmd(String cmdStr)
           rightSpeed(spdVal);
         }
       }
-      else if (String("fe") == cmds[0])
+      else if (String("lcdset") ==  cmds[0])
+      {
+        int din = atoi(cmds[1].c_str());
+        int cs = atoi(cmds[2].c_str());
+        int clk = atoi(cmds[3].c_str());
+        lcdSet(din, cs, clk);
+      }
+      else if (String("lcd") == cmds[0])
       {
           if (String("normal") == cmds[1])
           {
@@ -286,9 +374,49 @@ void OnCmd(String cmdStr)
              printByte(m); 
           }
       }
+      else if (String("cl") == cmds[0])
+      {
+          if (String("s") == cmds[1])
+          {
+            if (String("d") == cmds[2])
+            {
+              int pR = atoi(cmds[3].c_str());
+              int pG = atoi(cmds[4].c_str());
+              int pB = atoi(cmds[5].c_str());
+              cLightSet(pR, pG, pB, false);
+            }
+            else if (String("a") == cmds[2])
+            {
+              int pR = atoi(cmds[3].c_str());
+              int pG = atoi(cmds[4].c_str());
+              int pB = atoi(cmds[5].c_str());
+              cLightSet(pR, pG, pB, true);
+            }
+          }
+      }
+      else if (String("clc") == cmds[0])
+      {
+          int pR = atoi(cmds[1].c_str());
+          int pG = atoi(cmds[2].c_str());
+          int pB = atoi(cmds[3].c_str());
+          cLight(pR, pG, pB);
+      }
       else if (String("lt") == cmds[0])
       {
-          if (String("on") == cmds[1])
+          if (String("s") == cmds[1])
+          {
+            if (String("d") == cmds[2])
+            {
+              int pinVal = atoi(cmds[3].c_str());              
+              lightSet(pinVal, false);
+            }
+            else if (String("a") == cmds[2])
+            {
+              int pinVal = atoi(cmds[3].c_str());   
+              lightSet(pinVal, true);
+            }
+          }
+          else if (String("on") == cmds[1])
           {
             lightOn(true);
           } 
