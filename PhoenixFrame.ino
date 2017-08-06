@@ -103,6 +103,13 @@ void lcdSet(int pDIN, int pCS, int pCLK)
   pinCLK = pCLK;
 
   lc = LedControl(pinDIN, pinCS, pinCLK, 4);
+
+    // LCD
+  lc.shutdown(0,false); //启动时，MAX72XX处于省电模式  
+  lc.setIntensity(0,8); //将亮度设置为最大值  
+  lc.clearDisplay(0);   //清除显示 
+  
+  printByte(neutral);
 }
 void printByte(byte character [])  
 {  
@@ -142,27 +149,28 @@ int cPinG = A3;
 int cPinB = A4;
 void cLightSet(int pinR, int pinG, int pinB, bool isA)
 {
-  cPinR = pinR;
-  cPinG = pinG;
-  cPinB = pinB;
-  if (!isA)
+  if (isA)
   {
-    pinMode(cPinR, true);
-    pinMode(cPinG, true);
-    pinMode(cPinB, true);
+    cPinR = A0 + pinR;
+    cPinG = A0 + pinG;
+    cPinB = A0 + pinB;
   }
   else
   {
-    pinMode(A0 + cPinR, true);
-    pinMode(A0 + cPinG, true);
-    pinMode(A0 + cPinB, true);
+    cPinR = pinR;
+    cPinG = pinG;
+    cPinB = pinB;
   }
+
+    pinMode(cPinR, OUTPUT);
+    pinMode(cPinG, OUTPUT);
+    pinMode(cPinB, OUTPUT);
 }
 void cLight(int r, int g, int b)
 {
-    digitalWrite(cPinR, r>0 ? HIGH:LOW); 
-    digitalWrite(cPinG, g>0 ? HIGH:LOW);  
-    digitalWrite(cPinB, b>0 ? HIGH:LOW);  
+    digitalWrite(cPinR, r>0?LOW:HIGH); 
+    digitalWrite(cPinG, g>0?LOW:HIGH);  
+    digitalWrite(cPinB, b>0?LOW:HIGH);  
 }
 
 // trigger
@@ -175,7 +183,7 @@ void distInit(int pinTrig, int pinEcho)
     pinMode(PinTrig, OUTPUT); 
     pinMode(PinEcho, INPUT); 
 }
-int distanceTest()   // 量出前方距离 
+int distTest()   // 量出前方距离 
 {
   digitalWrite(PinTrig, LOW);   // 给触发脚低电平2μs
   delayMicroseconds(2);
@@ -190,31 +198,8 @@ int distanceTest()   // 量出前方距离
 
 void setup() 
 {
-  // Moto
-  pinMode(pinL0, OUTPUT);
-  pinMode(pinL1, OUTPUT);
+  cLightSet(2, 3, 4, true);
   
-  pinMode(pinR0, OUTPUT);
-  pinMode(pinR1, OUTPUT);
-
-  pinMode(pinLSpeed, OUTPUT);
-  pinMode(pinRSpeed, OUTPUT);
-    
-  leftGo(0);
-  rightGo(0);
-  leftSpeed(0);
-  rightSpeed(0);
-
-  // LCD
-  lc.shutdown(0,false); //启动时，MAX72XX处于省电模式  
-  lc.setIntensity(0,8); //将亮度设置为最大值  
-  lc.clearDisplay(0);   //清除显示 
-  
-  printByte(neutral);
-
-  // Trig
-  distInit(A0, A1);
-
   // Serial
   Serial.begin(9600);
 }
@@ -396,10 +381,10 @@ void OnCmd(String cmdStr)
       }
       else if (String("clc") == cmds[0])
       {
-          int pR = atoi(cmds[1].c_str());
-          int pG = atoi(cmds[2].c_str());
-          int pB = atoi(cmds[3].c_str());
-          cLight(pR, pG, pB);
+          int r = atoi(cmds[1].c_str());
+          int g = atoi(cmds[2].c_str());
+          int b = atoi(cmds[3].c_str());
+          cLight(r, g, b);
       }
       else if (String("lt") == cmds[0])
       {
@@ -518,9 +503,24 @@ void OnCmd(String cmdStr)
             } 
         }
       }
-      else if (String("dist") == cmds[0])
+      else if (String("distSet") == cmds[0])
       {
-          float dist = distanceTest();
+        if (String("d") == cmds[1] )
+        {
+          int pinTrig = atoi(cmds[2].c_str());
+          int pinEcho = atoi(cmds[3].c_str());      
+          distInit(pinTrig, pinEcho);
+        }
+        else if (String("a") == cmds[1])
+        {
+          int pinTrig = atoi(cmds[2].c_str());
+          int pinEcho = atoi(cmds[3].c_str());      
+          distInit(A0+pinTrig, A0+pinEcho);
+        }
+      }
+      else if (String("distTest") == cmds[0])
+      {
+          float dist = distTest();
           String sendStr = String("dist ") + String(dist);
           Serial.println(sendStr);
       }
@@ -530,7 +530,7 @@ void OnCmd(String cmdStr)
 String serStr;
 
 void loop()
-{ 
+{  
   while(Serial.available())
   {
     char c = Serial.read();
