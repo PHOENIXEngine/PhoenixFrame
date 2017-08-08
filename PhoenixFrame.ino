@@ -10,9 +10,11 @@ int pinR0=7;
 int pinR1=8;
 int pinRSpeed = 9;
 
+bool IsSmiple = false;
 void vehicleSet(int pL0, int pL1, int sL,
   int pR0, int pR1, int sR)
 {
+  IsSmiple = false;
   pinL0 = pL0;
   pinL1 = pL1;
   pinLSpeed = sL;
@@ -34,45 +36,75 @@ void vehicleSet(int pL0, int pL1, int sL,
   leftSpeed(0);
   rightSpeed(0);  
 }
+void vehicleSetSimple()
+{
+  IsSmiple = true;
+  pinL0 = 12;
+  pinL1 = 12;
+  pinLSpeed = 10;
+  pinR0 = 13;
+  pinR1 = 13;
+  pinRSpeed = 11;
+}
 void leftGo(int val)
 {
-  if (1 == val)
+  if (!IsSmiple)
   {
-    digitalWrite(pinL0, LOW); 
-    digitalWrite(pinL1, HIGH); 
-   }
-   else if (2 == val)
-   {
-      digitalWrite(pinL0, HIGH); 
-      digitalWrite(pinL1, LOW); 
-   }
-   else if (0 == val)
-   {
-      digitalWrite(pinL0, LOW); 
-      digitalWrite(pinL1, LOW); 
-   }
+      if (1 == val)
+      {
+        digitalWrite(pinL0, LOW); 
+        digitalWrite(pinL1, HIGH); 
+       }
+       else if (2 == val)
+       {
+          digitalWrite(pinL0, HIGH); 
+          digitalWrite(pinL1, LOW); 
+       }
+       else if (0 == val)
+       {
+          digitalWrite(pinL0, LOW); 
+          digitalWrite(pinL1, LOW); 
+       }
+  }
+  else
+  {
+    if (1 == val)
+      digitalWrite(pinL0,HIGH);
+    else
+      digitalWrite(pinL0,LOW);
+  }
 }
 void leftSpeed(int val)
 {
-    analogWrite(pinLSpeed, val); 
+     analogWrite(pinLSpeed, val);
 }
 void rightGo(int val)
 {
-  if (1 == val)
+  if (!IsSmiple)
   {
-    digitalWrite(pinR0, HIGH); 
-    digitalWrite(pinR1, LOW); 
-   }
-   else if (2 == val)
-   {
-    digitalWrite(pinR0, LOW); 
-    digitalWrite(pinR1, HIGH); 
-   }
-   else if (0 == val)
-   {
+    if (1 == val)
+    {
+      digitalWrite(pinR0, HIGH); 
+      digitalWrite(pinR1, LOW); 
+     }
+     else if (2 == val)
+     {
       digitalWrite(pinR0, LOW); 
-      digitalWrite(pinR0, LOW); 
-   }
+      digitalWrite(pinR1, HIGH); 
+     }
+     else if (0 == val)
+     {
+        digitalWrite(pinR0, LOW); 
+        digitalWrite(pinR0, LOW); 
+     }
+  }
+  else
+  {
+      if (1 == val)
+        digitalWrite(pinR0,HIGH);
+      else
+        digitalWrite(pinR0,LOW);
+  }
 }
 void rightSpeed(int val)
 {
@@ -95,7 +127,7 @@ byte m[8]=     {0xE7,0xFF,0xFF,0xDB,0xDB,0xDB,0xC3,0xC3};  //M
 byte smile[8]=   {0x3C,0x42,0xA5,0x81,0xA5,0x99,0x42,0x3C};//笑脸  
 byte neutral[8]= {0x3C,0x42,0xA5,0x81,0xBD,0x81,0x42,0x3C};//标准脸  
 
-LedControl lc = LedControl(pinDIN, pinCS, pinCLK, 4);
+LedControl lc = LedControl(0, 0, 0, 4);
 void lcdSet(int pDIN, int pCS, int pCLK)
 {
   pinDIN = pDIN;
@@ -269,6 +301,10 @@ void OnCmd(String cmdStr)
           int pR1 = atoi(cmds[6].c_str());
           int sR = atoi(cmds[7].c_str());
           vehicleSet(pL0, pL1, sL, pR0, pR1, sR);
+        }
+        else if (String("ss") == cmds[0])
+        {
+          vehicleSetSimple();
         }
       }
       else if (String("m") == cmds[0])
@@ -530,7 +566,7 @@ void OnCmd(String cmdStr)
 String serStr;
 
 void loop()
-{  
+{   
   while(Serial.available())
   {
     char c = Serial.read();
