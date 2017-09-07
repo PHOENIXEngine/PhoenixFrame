@@ -1,6 +1,9 @@
 // PhoenixFrame
 
 #include <LedControl.h>
+#include <Servo.h> 
+#include <SoftwareSerial.h>
+#include <DFPlayer_Mini_Mp3.h>         
 
 // Move
 int pinL0=4;
@@ -45,6 +48,11 @@ void vehicleSetSimple()
   pinR0 = 13;
   pinR1 = 13;
   pinRSpeed = 11;
+
+  pinMode(pinL0, OUTPUT);  
+  pinMode(pinR0, OUTPUT);
+  pinMode(pinLSpeed, OUTPUT);
+  pinMode(pinRSpeed, OUTPUT);
 }
 void leftGo(int val)
 {
@@ -226,7 +234,15 @@ int distTest()   // 量出前方距离
   fdistance= fdistance/58;       //为什么除以58等于厘米，  Y米=（X秒*344）/2
                                  // X秒=（ 2*Y米）/344 ==》X秒=0.0058*Y米 ==》厘米=微秒/58
   return (int)fdistance;
-} 
+}
+
+// server
+Servo servo;
+Servo servo1;
+Servo servo2;
+
+// mp3
+SoftwareSerial *mp3Serial = 0;
 
 void setup() 
 {
@@ -302,7 +318,7 @@ void OnCmd(String cmdStr)
           int sR = atoi(cmds[7].c_str());
           vehicleSet(pL0, pL1, sL, pR0, pR1, sR);
         }
-        else if (String("ss") == cmds[0])
+        else if (String("ss") == cmds[1])
         {
           vehicleSetSimple();
         }
@@ -559,6 +575,68 @@ void OnCmd(String cmdStr)
           float dist = distTest();
           String sendStr = String("dist ") + String(dist);
           Serial.println(sendStr);
+      }
+      else if (String("svrA") == cmds[0])
+      {
+        int val = atoi(cmds[1].c_str());
+        servo.attach(val);        
+      }
+      else if (String("svr1A") == cmds[0])
+      {
+        int val = atoi(cmds[1].c_str());
+        servo1.attach(val);        
+      }
+      else if (String("svr2A") == cmds[0])
+      {
+        int val = atoi(cmds[1].c_str());
+        servo2.attach(val);
+      }
+      else if (String("svr") == cmds[0])
+      {
+        int val = atoi(cmds[1].c_str());
+        servo.write(val);        
+      }
+      else if (String("svr1") == cmds[0])
+      {
+        int val = atoi(cmds[1].c_str());
+        servo1.write(val);        
+      }
+      else if (String("svr2") == cmds[0])
+      {
+        int val = atoi(cmds[1].c_str());
+        servo2.write(val);        
+      }
+      else if (String("mp3") == cmds[0])
+      {
+        int pin0 = atoi(cmds[1].c_str());
+        int pin1 = atoi(cmds[2].c_str());
+        mp3Serial = new SoftwareSerial(pin0, pin1);
+        mp3Serial->begin (9600);
+        mp3_set_serial (*mp3Serial);
+        delay(100);  //wait 1ms for mp3 module to set volume
+        mp3_set_volume (25);
+        delay(100);
+        mp3_stop();
+        delay(100);
+        mp3_play (1);
+        delay(100);
+      }
+      else if (String("mp3s") == cmds[0])
+      {
+        mp3_stop ();
+        delay(100);
+      }
+      else if (String("mp3vo") == cmds[0])
+      {
+        int val = atoi(cmds[1].c_str());
+        mp3_set_volume (val);
+        delay(100);
+      }
+      else if (String("mp3i") == cmds[0])
+      {
+        int index = atoi(cmds[1].c_str());
+        mp3_play (index);
+        delay(100);
       }
    }
 }
