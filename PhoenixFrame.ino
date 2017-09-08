@@ -3,7 +3,8 @@
 #include <LedControl.h>
 #include <Servo.h> 
 #include <SoftwareSerial.h>
-#include <DFPlayer_Mini_Mp3.h>         
+#include <DFPlayer_Mini_Mp3.h>
+#include <IRremote.h>    
 
 // Move
 int pinL0=4;
@@ -243,6 +244,12 @@ Servo servo2;
 
 // mp3
 SoftwareSerial *mp3Serial = 0;
+
+// IRremote
+int IRemote_Recv = 0;
+IRrecv *irrecv = 0;
+int IRemove_Snd = 0;
+IRsend irsend;
 
 void setup() 
 {
@@ -638,10 +645,17 @@ void OnCmd(String cmdStr)
         mp3_play (index);
         delay(100);
       }
+      else if (String("IRR") == cmds[0])
+      {
+         int pin = atoi(cmds[1].c_str());
+         irrecv = new IRrecv(pin);
+         irrecv->enableIRIn();
+      }
    }
 }
 
 String serStr;
+decode_results irResultes;
 
 void loop()
 {   
@@ -662,4 +676,27 @@ void loop()
        serStr += c; 
     }
   }
+
+  if (irrecv && irrecv->decode(&irResultes))
+  {
+    _IRProtocol(&irResultes);
+  }
+}
+
+void _IRProtocol(decode_results *results) 
+{
+  switch(results->decode_type) {
+   case NEC:
+     break;
+   case SONY:
+     break;
+   case RC5:
+     break;
+   case RC6:
+     break;
+   default:
+     Serial.print("Unknown encoding");  
+  }  
+       
+  //Serial.print(results->value, HEX);    // 红外线编码  
 }
