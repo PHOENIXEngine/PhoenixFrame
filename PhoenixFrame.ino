@@ -651,6 +651,11 @@ void OnCmd(String cmdStr)
          irrecv = new IRrecv(pin);
          irrecv->enableIRIn();
       }
+      else if (String("IRR_S") == cmds[0])
+      {
+          irsend.sendSony(0xa90, 12);
+          delay(40);
+      }
    }
 }
 
