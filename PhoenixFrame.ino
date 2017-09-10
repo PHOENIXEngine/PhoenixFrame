@@ -253,9 +253,9 @@ IRsend irsend;
 
 void setup() 
 {
-  cLightSet(2, 3, 4, true);
+  pinMode(3, OUTPUT);
   
-  // Serial
+  // Serial·
   Serial.begin(9600);
 }
 
@@ -625,8 +625,6 @@ void OnCmd(String cmdStr)
         delay(100);
         mp3_stop();
         delay(100);
-        mp3_play (1);
-        delay(100);
       }
       else if (String("mp3s") == cmds[0])
       {
@@ -645,21 +643,40 @@ void OnCmd(String cmdStr)
         mp3_play (index);
         delay(100);
       }
-      else if (String("IRR") == cmds[0])
+      else if (String("mp3n") == cmds[0])
       {
-         int pin = atoi(cmds[1].c_str());
+        mp3_next();
+        delay(100);
+      }
+      else if (String("irr") == cmds[0])
+      {
+         char charVal = cmds[1][0];
+         int pin = atoi(cmds[2].c_str());
+         
+         if ('a' == charVal)
+         {
+          pin = A0 + pin;
+         }
+
+         pinMode(pin, INPUT);                  
          irrecv = new IRrecv(pin);
          irrecv->enableIRIn();
       }
-      else if (String("IRR_S") == cmds[0])
+      else if (String("irr_nec") == cmds[0])
       {
-          irsend.sendSony(0xa90, 12);
-          delay(40);
+          int val = atoi(cmds[1].c_str());
+          irsend.sendNEC(val, 32);
+      }
+      else if (String("irr_sony") == cmds[0])
+      {
+          int val = atoi(cmds[1].c_str());
+          irsend.sendSony(val, 32);
       }
    }
 }
 
 String serStr;
+String recvStrIR; 
 decode_results irResultes;
 
 void loop()
@@ -685,23 +702,37 @@ void loop()
   if (irrecv && irrecv->decode(&irResultes))
   {
     _IRProtocol(&irResultes);
+     irrecv->resume();
   }
 }
 
 void _IRProtocol(decode_results *results) 
 {
-  switch(results->decode_type) {
-   case NEC:
-     break;
-   case SONY:
-     break;
-   case RC5:
-     break;
-   case RC6:
-     break;
-   default:
-     Serial.print("Unknown encoding");  
-  }  
-       
-  //Serial.print(results->value, HEX);    // 红外线编码  
+  Serial.print("Protocol: ");
+  
+  // 判断红外线协定种类
+  switch(results->decode_type)
+  {
+  case NEC:
+  Serial.print("NEC");
+  break;
+  case SONY:
+  Serial.print("SONY");
+  break;
+  case RC5:
+  Serial.print("RC5");
+  break;
+  case RC6:
+  Serial.print("RC6");
+  break;
+  default:
+  Serial.print("Unknown encoding"); 
+  } 
+  
+  // 把红外线编码印到 Serial port
+  Serial.print(", irCode: "); 
+  Serial.print(results->value); // 红外线编码
+  Serial.print(", bits: "); 
+  Serial.println(results->bits); // 红外线编码位元数 l.print(results->value, HEX);
+
 }
