@@ -708,6 +708,7 @@ void loop()
 
 void _IRProtocol(decode_results *results) 
 {
+  /*
   Serial.print("Protocol: ");
   
   // 判断红外线协定种类
@@ -728,11 +729,14 @@ void _IRProtocol(decode_results *results)
   default:
   Serial.print("Unknown encoding"); 
   } 
+  */
+
+  String recvStr = String("irr_r ") + String(results->value);
+  Serial.println(recvStr);
   
   // 把红外线编码印到 Serial port
-  Serial.print(", irCode: "); 
-  Serial.print(results->value); // 红外线编码
-  Serial.print(", bits: "); 
-  Serial.println(results->bits); // 红外线编码位元数 l.print(results->value, HEX);
-
+  //Serial.print(", irCode: "); 
+  //Serial.print(results->value); // 红外线编码
+  //Serial.print(", bits: "); 
+  //Serial.println(results->bits); // 红外线编码位元数 l.print(results->value, HEX);
 }
