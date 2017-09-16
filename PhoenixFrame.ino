@@ -694,7 +694,7 @@ void loop()
       serStr = "";
     }
     else
-    {
+    { 
        serStr += c; 
     }
   }
