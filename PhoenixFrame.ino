@@ -237,6 +237,12 @@ int distTest()   // 量出前方距离
   return (int)fdistance;
 }
 
+// pinmode
+const int NumPinD = 16;
+const int NumPinA = 8;
+int PinD[NumPinD];
+int PinA[NumPinA];
+
 // server
 Servo servo;
 Servo servo1;
@@ -255,8 +261,18 @@ void setup()
 {
   pinMode(3, OUTPUT);
   
-  // Serial·
+  // Serial
   Serial.begin(9600);
+
+  // pin
+  for (int i=0; i<NumPinD; i++)
+  {
+    PinD[i] = 0;
+  }
+  for (int i=0; i<NumPinA; i++)
+  {
+    PinA[i] = 0;
+  }
 }
 
 int pIGourp = 0;
@@ -472,28 +488,45 @@ void OnCmd(String cmdStr)
       else if (String("pM") == cmds[0])
       { 
           // pinVal val
+          bool isA = false;
+          int pinIndex = 0;
           int pinVal = 0;
           if (cmds[1].length() > 0)
            {
               char charVal = cmds[1][0];
               if ('A' == charVal)
               {
-                String cntStr = cmds[1].substring(1);
-                 pinVal = A0 + atoi(cmds[1].c_str());
+                 String cntStr = cmds[1].substring(1);
+                 pinIndex = atoi(cntStr.c_str());
+                 pinVal = A0 + pinIndex;
+                 isA = true;
               }
               else
               {
-                 pinVal = atoi(cmds[1].c_str());
+                 pinIndex = atoi(cmds[1].c_str());
+                 pinVal = pinIndex;
               }
-           }
-  
+           }  
           // pinMode val
-          int pinM = atoi(cmds[2].c_str());
+          int pinM = atoi(cmds[2].c_str());      
+
+          if (!isA)
+          {
+            PinD[pinIndex] = pinM;
+          }
+          else
+          {
+            PinA[pinIndex] = pinM;
+          }
   
           if (0 == pinM)
-            pinMode(pinVal, INPUT);
+          {
+            pinMode(pinVal, INPUT);            
+          }
           else if (1 == pinM)
+          {
             pinMode(pinVal, OUTPUT);
+          }
       }
       else if (String("dW") == cmds[0])
       {
@@ -679,8 +712,37 @@ String serStr;
 String recvStrIR; 
 decode_results irResultes;
 
+unsigned long currentMillis;        // store the current value from millis()
+unsigned long previousMillis;       // for comparison with currentMillis
+unsigned int samplingInterval = 19; // how often to run the main loop (in ms)
+
 void loop()
-{   
+{  
+  currentMillis = millis();
+  if (currentMillis - previousMillis > samplingInterval) 
+  {
+    previousMillis += samplingInterval;
+      
+    for (int i=0; i<NumPinD; i++)
+    {
+      if (1 == PinD[i])
+      {
+        int val = digitalRead(PinD[i]);      
+        String sendStr = String("dr ") + String(i) + " " + String(val);
+        Serial.println(sendStr);
+      }
+    }
+    for (int i=0; i<NumPinA; i++)
+    {
+      if (1 == PinA[i])
+      {   
+        int val = analogRead(PinA[i]);
+        String sendStr = String("ar ") + String(i) + " " + String(val);
+        Serial.println(sendStr);
+      }
+    }
+  }
+  
   while(Serial.available())
   {
     char c = Serial.read();
