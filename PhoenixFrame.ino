@@ -392,6 +392,12 @@ void OnCmd(String cmdStr)
           rightSpeed(spdVal);
         }
       }
+      else if (String("serl") == cmds[0])
+      {
+         Serial.end();
+         int val = atoi(cmds[1].c_str());
+         Serial.begin(val);
+      }
       else if (String("lcdset") ==  cmds[0])
       {
         int din = atoi(cmds[1].c_str());
@@ -616,19 +622,34 @@ void OnCmd(String cmdStr)
           String sendStr = String("dist ") + String(dist);
           Serial.println(sendStr);
       }
-      else if (String("svrA") == cmds[0])
+      else if (String("svrI") == cmds[0])
       {
         int val = atoi(cmds[1].c_str());
         servo.attach(val);        
       }
-      else if (String("svr1A") == cmds[0])
+      else if (String("svrIA") == cmds[0])
+      {
+        int val = A0 + atoi(cmds[1].c_str());
+        servo.attach(val);        
+      }
+      else if (String("svr1I") == cmds[0])
       {
         int val = atoi(cmds[1].c_str());
         servo1.attach(val);        
       }
-      else if (String("svr2A") == cmds[0])
+      else if (String("svr1IA") == cmds[0])
+      {
+        int val = A0 + atoi(cmds[1].c_str());
+        servo1.attach(val);        
+      }
+      else if (String("svr2I") == cmds[0])
       {
         int val = atoi(cmds[1].c_str());
+        servo2.attach(val);
+      }
+      else if (String("svr2IA") == cmds[0])
+      {
+        int val = A0 + atoi(cmds[1].c_str());
         servo2.attach(val);
       }
       else if (String("svr") == cmds[0])
@@ -650,6 +671,8 @@ void OnCmd(String cmdStr)
       {
         int pin0 = atoi(cmds[1].c_str());
         int pin1 = atoi(cmds[2].c_str());
+        pinMode(pin0, OUTPUT);
+        pinMode(pin1, OUTPUT);
         mp3Serial = new SoftwareSerial(pin0, pin1);
         mp3Serial->begin (9600);
         mp3_set_serial (*mp3Serial);
